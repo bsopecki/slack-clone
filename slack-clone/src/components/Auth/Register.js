@@ -1,5 +1,6 @@
 import React from 'react';
-import firebase from '../../firebase/firebase';
+import app from '../../firebase';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import {
 	Grid,
 	Form,
@@ -23,9 +24,9 @@ class Register extends React.Component {
 	};
 	handleSumbit = (event) => {
 		event.preventDefault();
-		firebase
-			.auth()
-			.createUserWithEmailAndPassword(this.state.email, this.state.password)
+		const auth = getAuth();
+
+		createUserWithEmailAndPassword(auth, this.state.email, this.state.password)
 			.then((createdUser) => {
 				console.log(createdUser);
 			})

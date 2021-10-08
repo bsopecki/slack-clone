@@ -41,6 +41,14 @@ class Register extends React.Component {
 		}
 	};
 
+	handleInputError = (errors, inputName) => {
+		return errors.some((error) =>
+			error.message.toLowerCase().includes(inputName)
+		)
+			? 'error'
+			: '';
+	};
+
 	displayErrors = (errors) =>
 		errors.map((error, i) => <p key={i}>{error.message}</p>);
 
@@ -108,6 +116,7 @@ class Register extends React.Component {
 								placeholder='Username'
 								onChange={this.handleChange}
 								value={username}
+								className={this.handleInputError(errors, 'username')}
 								type='text'
 							/>
 							<Form.Input
@@ -118,6 +127,7 @@ class Register extends React.Component {
 								placeholder='Email'
 								onChange={this.handleChange}
 								value={email}
+								className={this.handleInputError(errors, 'email')}
 								type='text'
 							/>
 							<Form.Input
@@ -128,6 +138,7 @@ class Register extends React.Component {
 								placeholder='Password'
 								onChange={this.handleChange}
 								value={password}
+								className={this.handleInputError(errors, 'password')}
 								type='text'
 							/>
 							<Form.Input
@@ -138,6 +149,7 @@ class Register extends React.Component {
 								placeholder='Password Confirmation'
 								onChange={this.handleChange}
 								value={passwordConfirmation}
+								className={this.handleInputError(errors, 'password')}
 								type='text'
 							/>
 							<Button

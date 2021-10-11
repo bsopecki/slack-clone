@@ -1,6 +1,11 @@
 import React from 'react';
-import app from '../../firebase';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import database from '../../firebase';
+import {
+	getAuth,
+	createUserWithEmailAndPassword,
+	updateProfile,
+} from 'firebase/auth';
+import md5 from 'md5';
 import {
 	Grid,
 	Form,
@@ -20,6 +25,7 @@ class Register extends React.Component {
 		passwordConfirmation: '',
 		errors: [],
 		loading: false,
+		usersRef,
 	};
 
 	isFormEmpty = ({ username, email, password, passwordConfirmation }) => {
@@ -32,21 +38,13 @@ class Register extends React.Component {
 	};
 
 	isPasswordValid = ({ password, passwordConfirmation }) => {
-		if (password.length || passwordConfirmation.length < 6) {
+		if (password.length < 6 || passwordConfirmation.length < 6) {
 			return false;
 		} else if (password !== passwordConfirmation) {
 			return false;
 		} else {
 			return true;
 		}
-	};
-
-	handleInputError = (errors, inputName) => {
-		return errors.some((error) =>
-			error.message.toLowerCase().includes(inputName)
-		)
-			? 'error'
-			: '';
 	};
 
 	displayErrors = (errors) =>
@@ -85,8 +83,30 @@ class Register extends React.Component {
 			)
 				.then((createdUser) => {
 					console.log(createdUser);
-					this.setState({ loading: false });
+					const user = auth.currentUser;
+					console.log(user);
+
+					updateProfile(user, {
+						displayName: this.state.username,
+						photoURL: `http://gravatar.com/avatar${md5(
+							createdUser.user.email
+						)}?d=identicon`,
+					})
+						.then(() => {
+							this.saveUser(createdUser).then(() => {
+								console.log('user savd');
+							});
+							this.setState({ loading: false });
+						})
+						.catch((err) => {
+							console.error(err);
+							this.setState({
+								errors: this.state.errors.concat(err),
+								loading: false,
+							});
+						});
 				})
+
 				.catch((err) => {
 					console.log(err);
 					this.setState({
@@ -96,6 +116,9 @@ class Register extends React.Component {
 				});
 		}
 	};
+
+	saveUser = (createdUser) => {};
+
 	render() {
 		const { username, email, password, passwordConfirmation, errors, loading } =
 			this.state;
@@ -116,7 +139,6 @@ class Register extends React.Component {
 								placeholder='Username'
 								onChange={this.handleChange}
 								value={username}
-								className={this.handleInputError(errors, 'username')}
 								type='text'
 							/>
 							<Form.Input
@@ -127,7 +149,6 @@ class Register extends React.Component {
 								placeholder='Email'
 								onChange={this.handleChange}
 								value={email}
-								className={this.handleInputError(errors, 'email')}
 								type='text'
 							/>
 							<Form.Input
@@ -138,7 +159,6 @@ class Register extends React.Component {
 								placeholder='Password'
 								onChange={this.handleChange}
 								value={password}
-								className={this.handleInputError(errors, 'password')}
 								type='text'
 							/>
 							<Form.Input
@@ -149,7 +169,6 @@ class Register extends React.Component {
 								placeholder='Password Confirmation'
 								onChange={this.handleChange}
 								value={passwordConfirmation}
-								className={this.handleInputError(errors, 'password')}
 								type='text'
 							/>
 							<Button

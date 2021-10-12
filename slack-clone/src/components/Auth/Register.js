@@ -1,10 +1,5 @@
 import React from 'react';
-import database from '../../firebase';
-import {
-	getAuth,
-	createUserWithEmailAndPassword,
-	updateProfile,
-} from 'firebase/auth';
+import firebase from 'firebase/app';
 import md5 from 'md5';
 import {
 	Grid,
@@ -25,9 +20,8 @@ class Register extends React.Component {
 		passwordConfirmation: '',
 		errors: [],
 		loading: false,
-		usersRef,
+		usersRef: firebase.database().ref('users'),
 	};
-
 	isFormEmpty = ({ username, email, password, passwordConfirmation }) => {
 		return (
 			!username.length ||
@@ -74,29 +68,22 @@ class Register extends React.Component {
 		event.preventDefault();
 		if (this.isFormValid()) {
 			this.setState({ errors: [], loading: true });
-			const auth = getAuth();
 
-			createUserWithEmailAndPassword(
-				auth,
-				this.state.email,
-				this.state.password
-			)
+			firebase
+				.auth()
+				.createUserWithEmailAndPassword(this.state.email, this.state.password)
 				.then((createdUser) => {
-					console.log(createdUser);
-					const user = auth.currentUser;
-					console.log(user);
-
-					updateProfile(user, {
-						displayName: this.state.username,
-						photoURL: `http://gravatar.com/avatar${md5(
-							createdUser.user.email
-						)}?d=identicon`,
-					})
+					createdUser.user
+						.updateProfile({
+							displayName: this.state.username,
+							photoURL: `http://gravatar.com/avatar${md5(
+								createdUser.user.email
+							)}?d=identicon`,
+						})
 						.then(() => {
 							this.saveUser(createdUser).then(() => {
-								console.log('user savd');
+								console.log('user saved');
 							});
-							this.setState({ loading: false });
 						})
 						.catch((err) => {
 							console.error(err);
@@ -117,7 +104,12 @@ class Register extends React.Component {
 		}
 	};
 
-	saveUser = (createdUser) => {};
+	saveUser = (createdUser) => {
+		return this.state.usersRef.child(createdUser.user.uid).set({
+			name: createdUser.user.displayName,
+			avatar: createdUser.user.photoURL,
+		});
+	};
 
 	render() {
 		const { username, email, password, passwordConfirmation, errors, loading } =
